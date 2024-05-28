@@ -15,9 +15,13 @@
  */
 package com.jiangdg.demo
 
-import android.Manifest.permission.*
+import android.Manifest.permission.CAMERA
+import android.Manifest.permission.RECORD_AUDIO
+import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
 import android.os.PowerManager
+import android.util.Log
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
@@ -26,6 +30,7 @@ import com.gyf.immersionbar.ImmersionBar
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.demo.databinding.ActivityMainBinding
+import com.jiangdg.yolov8.Yolov8Ncnn
 
 /**
  * Demos of camera usage
@@ -36,7 +41,14 @@ class MainActivity : AppCompatActivity() {
     private var mWakeLock: PowerManager.WakeLock? = null
     private var immersionBar: ImmersionBar? = null
     private lateinit var viewBinding: ActivityMainBinding
-
+    
+    // 2024.05.28
+    private val spinnerModel: Spinner? = null
+    private val spinnerCPUGPU: Spinner? = null
+    private val current_model = 0
+    private val current_cpugpu = 0
+    val yolov8ncnn = Yolov8Ncnn()
+    // 2024.05.28
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStatusBar()
@@ -45,8 +57,19 @@ class MainActivity : AppCompatActivity() {
 //        replaceDemoFragment(DemoMultiCameraFragment())
         replaceDemoFragment(DemoFragment())
 //        replaceDemoFragment(GlSurfaceFragment())
+    
+        yolov8ncnnLoadModel()
     }
-
+    
+    private fun yolov8ncnnLoadModel()
+    {
+        val ret_init: Boolean = yolov8ncnn.loadModel(assets, current_model, current_cpugpu)
+        if(!ret_init)
+        {
+            Log.e("MainActivity", "yolov8ncnn loadModel failed")
+        }
+    }
+    
     override fun onStart() {
         super.onStart()
         mWakeLock = Utils.wakeLock(this)

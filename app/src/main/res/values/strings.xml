@@ -3,4 +3,12 @@
     <string name="permission_tip" translatable="false">You have already denied permission access. Go to the Settings page to turn on permissions</string>
     <string name="dialog_contact_title" translatable="false">Contact me:</string>
     <string name="dialog_contact_message" translatable="false">765067602@qq.com\n\n❤ version: %s</string>
+    <string-array name="model_array">
+        <item>n</item>
+        <item>s</item>
+    </string-array>
+    <string-array name="cpugpu_array">
+        <item>CPU</item>
+        <item>GPU</item>
+    </string-array>
 </resources>

@@ -17,6 +17,11 @@ android {
         ndk{
             abiFilters 'armeabi-v7a','arm64-v8a'
         }
+        externalNativeBuild {
+            cmake {
+                cppFlags ''
+            }
+        }
     }
     buildTypes {
         release {
@@ -36,6 +41,12 @@ android {
 
     buildFeatures {
         viewBinding true
+    }
+    externalNativeBuild {
+        cmake {
+            path file('src/main/jni/CMakeLists.txt')
+            version '3.22.1'
+        }
     }
 
     // libuvc module should need set local.properties
@@ -67,6 +78,9 @@ dependencies {
 
     // For debug online
     implementation project(':libausbc')
+
+    implementation "androidx.multidex:multidex:2.0.1"
+
 
     // demo
 //    implementation 'com.github.jiangdongguo.AndroidUSBCamera:libausbc:3.3.3'
