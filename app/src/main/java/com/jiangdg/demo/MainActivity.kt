@@ -21,6 +21,8 @@ import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
+import android.view.View
+import android.widget.AdapterView
 import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -43,10 +45,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewBinding: ActivityMainBinding
     
     // 2024.05.28
-    private val spinnerModel: Spinner? = null
-    private val spinnerCPUGPU: Spinner? = null
-    private val current_model = 0
-    private val current_cpugpu = 0
+    private var spinnerModel: Spinner? = null
+    private var spinnerCPUGPU: Spinner? = null
+    private var current_model = 0
+    private var current_cpugpu = 0
     val yolov8ncnn = Yolov8Ncnn()
     // 2024.05.28
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,14 +57,17 @@ class MainActivity : AppCompatActivity() {
         viewBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 //        replaceDemoFragment(DemoMultiCameraFragment())
-        replaceDemoFragment(DemoFragment())
+//        replaceDemoFragment(DemoFragment())
 //        replaceDemoFragment(GlSurfaceFragment())
-    
+        
+        replaceDemoFragment(Yolov8Fragment())
+        
         yolov8ncnnLoadModel()
     }
     
     private fun yolov8ncnnLoadModel()
     {
+        
         val ret_init: Boolean = yolov8ncnn.loadModel(assets, current_model, current_cpugpu)
         if(!ret_init)
         {

@@ -17,9 +17,14 @@ package com.jiangdg.ausbc.camera
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
@@ -49,7 +54,9 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     private val mCameraPreviewSize by lazy {
         arrayListOf<PreviewSize>()
     }
-
+    
+//    val yolov8Ncnn = Yolov8Ncnn()
+    
     private val frameCallBack = IFrameCallback { frame ->
         frame?.apply {
             frame.position(0)
@@ -71,10 +78,41 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 // for video
                 // avoid preview size changed
                 putVideoData(data)
+                
+                // Perform YOLO detection
+//                val detectedObjects = yolov8Ncnn.detectObjects(data, previewWidth, previewHeight)
+                
+                // Draw detected objects on the image
+//                drawDetectedObjects(detectedObjects as Array<Any>)
             }
         }
     }
 
+//    private fun drawDetectedObjects(objects: Array<Any>) {
+//        runOnUiThread {
+//            // Draw the detected objects on the ImageView
+//            val canvas = imageView.holder.lockCanvas()
+//            if (canvas != null) {
+//                val paint = Paint()
+//                paint.color = Color.RED
+//                paint.style = Paint.Style.STROKE
+//                paint.strokeWidth = 2f
+//
+//                for (obj in objects) {
+//                    val rect = Rect(obj.x, obj.y, obj.x + obj.width, obj.y + obj.height)
+//                    canvas.drawRect(rect, paint)
+//
+//                    val textPaint = Paint()
+//                    textPaint.color = Color.WHITE
+//                    textPaint.textSize = 30f
+//                    canvas.drawText("${obj.label} ${obj.prob * 100}%", rect.left.toFloat(), rect.top.toFloat(), textPaint)
+//                }
+//
+//                imageView.holder.unlockCanvasAndPost(canvas)
+//            }
+//        }
+//    }
+    
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
         val previewSizeList = arrayListOf<PreviewSize>()
         val isMjpegFormat = mCameraRequest?.previewFormat == CameraRequest.PreviewFormat.FORMAT_MJPEG
@@ -105,7 +143,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
         }
         return previewSizeList
     }
-
+    
     override fun <T> openCameraInternal(cameraView: T) {
         if (Utils.isTargetSdkOverP(ctx) && !CameraUtils.hasCameraPermission(ctx)) {
             closeCamera()
@@ -129,7 +167,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             postStateEvent(ICameraStateCallBack.State.ERROR, "open camera failed ${e.localizedMessage}")
             Logger.e(TAG, "open camera failed.", e)
         }
-
+        
         // 2. set preview size and register preview callback
         var previewSize = getSuitableSize(request.previewWidth, request.previewHeight).apply {
             mCameraRequest!!.previewWidth = width
@@ -224,7 +262,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             Logger.i(TAG, " start preview, name = ${device.deviceName}, preview=$previewSize")
         }
     }
-
+    
     override fun closeCameraInternal() {
         postStateEvent(ICameraStateCallBack.State.CLOSED)
         isPreviewed = false
@@ -235,7 +273,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             Logger.i(TAG, " stop preview, name = ${device.deviceName}")
         }
     }
-
+    
     override fun captureImageInternal(savePath: String?, callback: ICaptureCallBack) {
         mSaveImageExecutor.submit {
             if (! CameraUtils.hasStoragePermission(ctx)) {
@@ -296,14 +334,14 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             if (Utils.debugCamera) { Logger.i(TAG, "captureImageInternal save path = $path") }
         }
     }
-
+    
     /**
      * Is mic supported
      *
      * @return true camera support mic
      */
     fun isMicSupported() = CameraUtils.isCameraContainsMic(this.device)
-
+    
     /**
      * Send camera command
      *
@@ -314,7 +352,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             mUvcCamera?.sendCommand(command)
         }
     }
-
+    
     /**
      * Set auto focus
      *
@@ -323,21 +361,21 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setAutoFocus(enable: Boolean) {
         mUvcCamera?.autoFocus = enable
     }
-
+    
     /**
      * Get auto focus
      *
      * @return true enable auto focus
      */
     fun getAutoFocus() = mUvcCamera?.autoFocus
-
+    
     /**
      * Reset auto focus
      */
     fun resetAutoFocus() {
         mUvcCamera?.resetFocus()
     }
-
+    
     /**
      * Set auto white balance
      *
@@ -346,14 +384,14 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setAutoWhiteBalance(autoWhiteBalance: Boolean) {
         mUvcCamera?.autoWhiteBlance = autoWhiteBalance
     }
-
+    
     /**
      * Get auto white balance
      *
      * @return true enable auto white balance
      */
     fun getAutoWhiteBalance() = mUvcCamera?.autoWhiteBlance
-
+    
     /**
      * Set zoom
      *
@@ -362,19 +400,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setZoom(zoom: Int) {
         mUvcCamera?.zoom = zoom
     }
-
+    
     /**
      * Get zoom
      */
     fun getZoom() = mUvcCamera?.zoom
-
+    
     /**
      * Reset zoom
      */
     fun resetZoom() {
         mUvcCamera?.resetZoom()
     }
-
+    
     /**
      * Set gain
      *
@@ -383,19 +421,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setGain(gain: Int) {
         mUvcCamera?.gain = gain
     }
-
+    
     /**
      * Get gain
      */
     fun getGain() = mUvcCamera?.gain
-
+    
     /**
      * Reset gain
      */
     fun resetGain() {
         mUvcCamera?.resetGain()
     }
-
+    
     /**
      * Set gamma
      *
@@ -404,19 +442,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setGamma(gamma: Int) {
         mUvcCamera?.gamma = gamma
     }
-
+    
     /**
      * Get gamma
      */
     fun getGamma() = mUvcCamera?.gamma
-
+    
     /**
      * Reset gamma
      */
     fun resetGamma() {
         mUvcCamera?.resetGamma()
     }
-
+    
     /**
      * Set brightness
      *
@@ -425,14 +463,14 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setBrightness(brightness: Int) {
         mUvcCamera?.brightness = brightness
     }
-
+    
     /**
      * Get brightness
      */
     fun getBrightness() = mUvcCamera?.brightness
     
     fun getBrightnessMax() = mUvcCamera?.brightnessMax
-
+    
     fun getBrightnessMin() = mUvcCamera?.brightnessMin
     
     /**
@@ -441,7 +479,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun resetBrightness() {
         mUvcCamera?.resetBrightness()
     }
-
+    
     /**
      * Set contrast
      *
@@ -450,19 +488,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setContrast(contrast: Int) {
         mUvcCamera?.contrast = contrast
     }
-
+    
     /**
      * Get contrast
      */
     fun getContrast() = mUvcCamera?.contrast
-
+    
     /**
      * Reset contrast
      */
     fun resetContrast() {
         mUvcCamera?.resetContrast()
     }
-
+    
     /**
      * Set sharpness
      *
@@ -471,19 +509,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setSharpness(sharpness: Int) {
         mUvcCamera?.sharpness = sharpness
     }
-
+    
     /**
      * Get sharpness
      */
     fun getSharpness() = mUvcCamera?.sharpness
-
+    
     /**
      * Reset sharpness
      */
     fun resetSharpness() {
         mUvcCamera?.resetSharpness()
     }
-
+    
     /**
      * Set saturation
      *
@@ -492,19 +530,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setSaturation(saturation: Int) {
         mUvcCamera?.saturation = saturation
     }
-
+    
     /**
      * Get saturation
      */
     fun getSaturation() = mUvcCamera?.saturation
-
+    
     /**
      * Reset saturation
      */
     fun resetSaturation() {
         mUvcCamera?.resetSaturation()
     }
-
+    
     /**
      * Set hue
      *
@@ -513,19 +551,19 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
     fun setHue(hue: Int) {
         mUvcCamera?.hue = hue
     }
-
+    
     /**
      * Get hue
      */
     fun getHue() = mUvcCamera?.hue
-
+    
     /**
      * Reset saturation
      */
     fun resetHue() {
         mUvcCamera?.resetHue()
     }
-
+    
     companion object {
         private const val TAG = "CameraUVC"
         private const val MIN_FS = 1
