@@ -21,8 +21,6 @@ import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
-import android.view.View
-import android.widget.AdapterView
 import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -32,6 +30,7 @@ import com.gyf.immersionbar.ImmersionBar
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.demo.databinding.ActivityMainBinding
+import com.jiangdg.yolov8.Yolov8Fragment
 import com.jiangdg.yolov8.Yolov8Ncnn
 
 /**
