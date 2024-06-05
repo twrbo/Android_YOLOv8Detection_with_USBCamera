@@ -21,7 +21,8 @@ import android.Manifest.permission.WRITE_EXTERNAL_STORAGE
 import android.os.Bundle
 import android.os.PowerManager
 import android.util.Log
-import android.widget.Spinner
+import android.view.View
+import android.widget.AdapterView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.PermissionChecker
@@ -30,6 +31,7 @@ import com.gyf.immersionbar.ImmersionBar
 import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.demo.databinding.ActivityMainBinding
+import com.jiangdg.demo.databinding.FragmentYolov8Binding
 import com.jiangdg.yolov8.Yolov8Fragment
 import com.jiangdg.yolov8.Yolov8Ncnn
 
@@ -42,14 +44,14 @@ class MainActivity : AppCompatActivity() {
     private var mWakeLock: PowerManager.WakeLock? = null
     private var immersionBar: ImmersionBar? = null
     private lateinit var viewBinding: ActivityMainBinding
+    private lateinit var yolov8View: FragmentYolov8Binding
     
     // 2024.05.28
-    private var spinnerModel: Spinner? = null
-    private var spinnerCPUGPU: Spinner? = null
     private var current_model = 0
     private var current_cpugpu = 0
     val yolov8ncnn = Yolov8Ncnn()
     // 2024.05.28
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setStatusBar()
@@ -59,14 +61,48 @@ class MainActivity : AppCompatActivity() {
 //        replaceDemoFragment(DemoFragment())
 //        replaceDemoFragment(GlSurfaceFragment())
         
-        replaceDemoFragment(Yolov8Fragment())
+        yolov8View = FragmentYolov8Binding.inflate(layoutInflater)
+        yolov8View.spinnerModel!!.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
+        {
+            override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
+            {
+                if(position != current_model)
+                {
+                    current_model = position
+                    yolov8ncnnLoadModel()
+                }
+            }
+        
+            override fun onNothingSelected(arg0: AdapterView<*>?)
+            {
+            }
+        }
+        
+        yolov8View.spinnerCPUGPU!!.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
+        {
+            override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
+            {
+                if(position != current_cpugpu)
+                {
+                    current_cpugpu = position
+                    yolov8ncnnLoadModel()
+                }
+            }
+
+            override fun onNothingSelected(arg0: AdapterView<*>?)
+            {
+            }
+        }
         
         yolov8ncnnLoadModel()
+        
+        replaceDemoFragment(Yolov8Fragment())
+        
+        
     }
     
     private fun yolov8ncnnLoadModel()
     {
-        
         val ret_init: Boolean = yolov8ncnn.loadModel(assets, current_model, current_cpugpu)
         if(!ret_init)
         {

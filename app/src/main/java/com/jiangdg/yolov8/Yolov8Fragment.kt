@@ -84,6 +84,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     {
         data?.let {
             Log.e(TEST_TAG,"onPreview")
+//            yolov8ncnn.detectObjects(data,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
         }
     }
 }

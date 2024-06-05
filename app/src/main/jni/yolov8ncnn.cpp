@@ -176,34 +176,63 @@ JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv* 
 }
 
 JNIEXPORT jobjectArray JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv* env, jobject thiz, jbyteArray imageData, jint width, jint height) {
-    jbyte* yuvData = env->GetByteArrayElements(imageData, nullptr);
+    jbyte* data = env->GetByteArrayElements(imageData, nullptr);
+    // 創建一個cv::Mat來存儲YUY2格式的影像資料
+    cv::Mat yuy2(height, width, CV_8UC2, reinterpret_cast<unsigned char*>(data));
 
-    // Convert YUV to RGB
-    cv::Mat yuv(height + height / 2, width, CV_8UC1, yuvData);
+    // 創建一個cv::Mat來存儲轉換後的RGB影像
     cv::Mat rgb;
-    cv::cvtColor(yuv, rgb, cv::COLOR_YUV2RGB_NV21);
 
-    // YOLO detection
-    std::vector<Object> objects;
-    g_yolo->detect(rgb, objects, 0.5f, 0.45f);
+    // 將YUY2格式轉換為RGB格式
+    cv::cvtColor(yuy2, rgb, cv::COLOR_YUV2RGB_YUY2);
 
-    // Release the YUV data
-    env->ReleaseByteArrayElements(imageData, yuvData, 0);
+    // 釋放原始影像資料
+    env->ReleaseByteArrayElements(imageData, data, 0);
+    // nanodet
+    {
+        ncnn::MutexLockGuard g(lock);
 
-    // Create Java array to return detected objects
-    jclass objectClass = env->FindClass("com/jiangdg/yolov8/Yolov8Ncnn$Yolov8Object");
-    jobjectArray objectArray = env->NewObjectArray(objects.size(), objectClass, nullptr);
+        if (g_yolo) {
+            std::vector<Object> objects;
+            g_yolo->detect(rgb, objects);
 
-    jmethodID constructor = env->GetMethodID(objectClass, "<init>", "(IIIIIF)V");
-    for (size_t i = 0; i < objects.size(); i++) {
-        const Object& obj = objects[i];
-        jobject object = env->NewObject(objectClass, constructor,
-                                        obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height,
-                                        obj.label, obj.prob);
-        env->SetObjectArrayElement(objectArray, i, object);
+            g_yolo->draw(rgb, objects);
+        } else {
+            draw_unsupported(rgb);
+        }
     }
 
-    return objectArray;
+    draw_fps(rgb);
+
+
+    //    jbyte* yuvData = env->GetByteArrayElements(imageData, nullptr);
+//
+//    // Convert YUV to RGB
+//    cv::Mat yuv(height + height / 2, width, CV_8UC1, yuvData);
+//    cv::Mat rgb;
+//    cv::cvtColor(yuv, rgb, cv::COLOR_YUV2RGB_NV21);
+//
+//    // YOLO detection
+//    std::vector<Object> objects;
+//    g_yolo->detect(rgb, objects, 0.5f, 0.45f);
+//
+//    // Release the YUV data
+//    env->ReleaseByteArrayElements(imageData, yuvData, 0);
+//
+//    // Create Java array to return detected objects
+//    jclass objectClass = env->FindClass("com/jiangdg/yolov8/Yolov8Ncnn$Yolov8Object");
+//    jobjectArray objectArray = env->NewObjectArray(objects.size(), objectClass, nullptr);
+//
+//    jmethodID constructor = env->GetMethodID(objectClass, "<init>", "(IIIIIF)V");
+//    for (size_t i = 0; i < objects.size(); i++) {
+//        const Object& obj = objects[i];
+//        jobject object = env->NewObject(objectClass, constructor,
+//                                        obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height,
+//                                        obj.label, obj.prob);
+//        env->SetObjectArrayElement(objectArray, i, object);
+//    }
+//
+//    return objectArray;
 }
 
 }

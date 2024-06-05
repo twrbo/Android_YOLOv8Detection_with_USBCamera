@@ -6,19 +6,6 @@
 
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content">
-
-    <Button
-        android:id="@+id/buttonSwitchCamera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="切换摄像头" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
@@ -27,6 +14,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:drawSelectorOnTop="true"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark"
         android:entries="@array/model_array" />
 
     <Spinner
@@ -34,6 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:drawSelectorOnTop="true"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark"
         android:entries="@array/cpugpu_array" />
 
     </LinearLayout>
@@ -43,6 +32,7 @@
         android:id="@+id/cameraViewContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black" />
+        android:background="@color/black" >
+    </FrameLayout>
 
 </LinearLayout>
