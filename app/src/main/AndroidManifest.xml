@@ -26,20 +26,15 @@
         android:roundIcon="@mipmap/ic_logo"
         android:supportsRtl="true"
         android:theme="@style/Theme.ClinkCameraDemo">
+
         <activity
-            android:name="com.jiangdg.demo.SplashActivity"
+            android:name="com.jiangdg.demo.MainActivity"
             android:exported="true"
-            android:screenOrientation="fullSensor"
-            android:theme="@style/SplashActivityStyle">
+            android:theme="@style/Theme.ClinkCameraDemo.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <activity
-            android:name="com.jiangdg.demo.MainActivity"
-            android:theme="@style/Theme.ClinkCameraDemo.NoActionBar">
         </activity>
     </application>
 
