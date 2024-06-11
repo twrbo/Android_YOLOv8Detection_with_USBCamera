@@ -10,7 +10,7 @@ public class Yolov8Ncnn
     public native boolean closeCamera();
     public native boolean setOutputWindow(Surface surface);
 
-    public native Object[] detectObjects(byte[] imageData, int width, int height);
+    public native boolean detectObjects(short[] sourceData, int width, int height);
 
     public static class Yolov8Object {
         public int x;

@@ -32,11 +32,12 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #if __ARM_NEON
+
 #include <arm_neon.h>
+
 #endif // __ARM_NEON
 
-static int draw_unsupported(cv::Mat& rgb)
-{
+static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
 
     int baseLine = 0;
@@ -46,7 +47,7 @@ static int draw_unsupported(cv::Mat& rgb)
     int x = (rgb.cols - label_size.width) / 2;
 
     cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                    cv::Scalar(255, 255, 255), -1);
+                  cv::Scalar(255, 255, 255), -1);
 
     cv::putText(rgb, text, cv::Point(x, y + label_size.height),
                 cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0));
@@ -54,8 +55,7 @@ static int draw_unsupported(cv::Mat& rgb)
     return 0;
 }
 
-static int draw_fps(cv::Mat& rgb)
-{
+static int draw_fps(cv::Mat &rgb) {
     // resolve moving average
     float avg_fps = 0.f;
     {
@@ -63,8 +63,7 @@ static int draw_fps(cv::Mat& rgb)
         static float fps_history[10] = {0.f};
 
         double t1 = ncnn::get_current_time();
-        if (t0 == 0.f)
-        {
+        if (t0 == 0.f) {
             t0 = t1;
             return 0;
         }
@@ -72,19 +71,16 @@ static int draw_fps(cv::Mat& rgb)
         float fps = 1000.f / (t1 - t0);
         t0 = t1;
 
-        for (int i = 9; i >= 1; i--)
-        {
+        for (int i = 9; i >= 1; i--) {
             fps_history[i] = fps_history[i - 1];
         }
         fps_history[0] = fps;
 
-        if (fps_history[9] == 0.f)
-        {
+        if (fps_history[9] == 0.f) {
             return 0;
         }
 
-        for (int i = 0; i < 10; i++)
-        {
+        for (int i = 0; i < 10; i++) {
             avg_fps += fps_history[i];
         }
         avg_fps /= 10.f;
@@ -100,7 +96,7 @@ static int draw_fps(cv::Mat& rgb)
     int x = rgb.cols - label_size.width;
 
     cv::rectangle(rgb, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                    cv::Scalar(255, 255, 255), -1);
+                  cv::Scalar(255, 255, 255), -1);
 
     cv::putText(rgb, text, cv::Point(x, y + label_size.height),
                 cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
@@ -108,86 +104,78 @@ static int draw_fps(cv::Mat& rgb)
     return 0;
 }
 
-static Yolo* g_yolo = 0;
+static Yolo *g_yolo = 0;
 static ncnn::Mutex lock;
 
 
 extern "C" {
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
-JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv* env, jobject thiz, jobject assetManager, jint modelid, jint cpugpu)
-{
-    if (modelid < 0 || modelid > 6 || cpugpu < 0 || cpugpu > 1)
-    {
+JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv *env, jobject thiz, jobject assetManager, jint modelid, jint cpugpu) {
+    if (modelid < 0 || modelid > 6 || cpugpu < 0 || cpugpu > 1) {
         return JNI_FALSE;
     }
 
-    AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
+    AAssetManager *mgr = AAssetManager_fromJava(env, assetManager);
 
     __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "loadModel %p", mgr);
 
-    const char* modeltypes[] =
-    {
-        "n",
-        "s",
-    };
+    const char *modeltypes[] =
+            {
+                    "n",
+                    "s",
+            };
 
     const int target_sizes[] =
-    {
-        320,
-        320,
-    };
+            {
+                    320,
+                    320,
+            };
 
     const float mean_vals[][3] =
-    {
-        {103.53f, 116.28f, 123.675f},
-        {103.53f, 116.28f, 123.675f},
-    };
+            {
+                    {103.53f, 116.28f, 123.675f},
+                    {103.53f, 116.28f, 123.675f},
+            };
 
     const float norm_vals[][3] =
-    {
-        { 1 / 255.f, 1 / 255.f, 1 / 255.f },
-        { 1 / 255.f, 1 / 255.f, 1 / 255.f },
-    };
+            {
+                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
+                    {1 / 255.f, 1 / 255.f, 1 / 255.f},
+            };
 
-    const char* modeltype = modeltypes[(int)modelid];
-    int target_size = target_sizes[(int)modelid];
-    bool use_gpu = (int)cpugpu == 1;
+    const char *modeltype = modeltypes[(int) modelid];
+    int target_size = target_sizes[(int) modelid];
+    bool use_gpu = (int) cpugpu == 1;
 
     // reload
     {
         ncnn::MutexLockGuard g(lock);
 
-        if (use_gpu && ncnn::get_gpu_count() == 0)
-        {
+        if (use_gpu && ncnn::get_gpu_count() == 0) {
             // no gpu
             delete g_yolo;
             g_yolo = 0;
-        }
-        else
-        {
+        } else {
             if (!g_yolo)
                 g_yolo = new Yolo;
-            g_yolo->load(mgr, modeltype, target_size, mean_vals[(int)modelid], norm_vals[(int)modelid], use_gpu);
+            g_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid], norm_vals[(int) modelid], use_gpu);
         }
     }
 
     return JNI_TRUE;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv* env, jobject thiz, jbyteArray imageData, jint width, jint height) {
-    jbyte* data = env->GetByteArrayElements(imageData, nullptr);
-    // 創建一個cv::Mat來存儲YUY2格式的影像資料
-    cv::Mat yuy2(height, width, CV_8UC2, reinterpret_cast<unsigned char*>(data));
-
-    // 創建一個cv::Mat來存儲轉換後的RGB影像
+JNIEXPORT jboolean JNICALL
+Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jshortArray sourceData, jint width, jint height) {
+    jshort *data = env->GetShortArrayElements(sourceData, nullptr);
+    cv::Mat rgba(height, width, CV_8UC4, reinterpret_cast<unsigned char *>(data));
     cv::Mat rgb;
 
-    // 將YUY2格式轉換為RGB格式
-    cv::cvtColor(yuy2, rgb, cv::COLOR_YUV2RGB_YUY2);
+    // Convert data from rgba to rgb
+    cv::cvtColor(rgba, rgb, cv::COLOR_RGBA2RGB);
 
-    // 釋放原始影像資料
-    env->ReleaseByteArrayElements(imageData, data, 0);
+    env->ReleaseShortArrayElements(sourceData, data, 0);
     // nanodet
     {
         ncnn::MutexLockGuard g(lock);
@@ -204,35 +192,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(
 
     draw_fps(rgb);
 
-
-    //    jbyte* yuvData = env->GetByteArrayElements(imageData, nullptr);
-//
-//    // Convert YUV to RGB
-//    cv::Mat yuv(height + height / 2, width, CV_8UC1, yuvData);
-//    cv::Mat rgb;
-//    cv::cvtColor(yuv, rgb, cv::COLOR_YUV2RGB_NV21);
-//
-//    // YOLO detection
-//    std::vector<Object> objects;
-//    g_yolo->detect(rgb, objects, 0.5f, 0.45f);
-//
-//    // Release the YUV data
-//    env->ReleaseByteArrayElements(imageData, yuvData, 0);
-//
-//    // Create Java array to return detected objects
-//    jclass objectClass = env->FindClass("com/jiangdg/yolov8/Yolov8Ncnn$Yolov8Object");
-//    jobjectArray objectArray = env->NewObjectArray(objects.size(), objectClass, nullptr);
-//
-//    jmethodID constructor = env->GetMethodID(objectClass, "<init>", "(IIIIIF)V");
-//    for (size_t i = 0; i < objects.size(); i++) {
-//        const Object& obj = objects[i];
-//        jobject object = env->NewObject(objectClass, constructor,
-//                                        obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height,
-//                                        obj.label, obj.prob);
-//        env->SetObjectArrayElement(objectArray, i, object);
-//    }
-//
-//    return objectArray;
+    return JNI_TRUE;
 }
 
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.jiangdg.yolov8
-import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -83,8 +82,13 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     override fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
     {
         data?.let {
-            Log.e(TEST_TAG,"onPreview")
-//            yolov8ncnn.detectObjects(data,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
+            val correctedData = ShortArray(data.size)
+    
+            // Convert to correct range
+            for (i in data.indices) {
+                correctedData[i] = (data[i].toInt() and 0xFF).toShort()
+            }
+            yolov8ncnn.detectObjects(correctedData,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
         }
     }
 }
