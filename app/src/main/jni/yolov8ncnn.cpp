@@ -173,14 +173,12 @@ JNIEXPORT jboolean JNICALL
 Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray sourceData, jint width, jint height) {
     jbyte *data = env->GetByteArrayElements(sourceData, nullptr);
 
+    // Convert data from RGBA to RGB
     cv::Mat rgba(height, width, CV_8UC4, reinterpret_cast<unsigned char *>(data));
     cv::Mat rgb;
-    // Convert data from rgba to rgb
     cv::cvtColor(rgba, rgb, cv::COLOR_RGBA2RGB);
 
-    env->ReleaseByteArrayElements(sourceData, data, 0);
-
-
+    // Perform object detection
     ncnn::MutexLockGuard g(lock);
     if (g_yolo) {
         std::vector<Object> objects;
@@ -192,8 +190,7 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
     }
     draw_fps(rgb);
 
-
-
+    env->ReleaseByteArrayElements(sourceData, data, 0);
 
 
     // DEBUG
