@@ -32,6 +32,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <iostream>
+
 #if __ARM_NEON
 
 #include <arm_neon.h>
@@ -157,7 +158,8 @@ JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv *
             // no gpu
             delete g_yolo;
             g_yolo = 0;
-        } else {
+        }
+        else {
             if (!g_yolo)
                 g_yolo = new Yolo;
             g_yolo->load(mgr, modeltype, target_size, mean_vals[(int) modelid], norm_vals[(int) modelid], use_gpu);
@@ -178,30 +180,31 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
 
     env->ReleaseByteArrayElements(sourceData, data, 0);
 
-    // nanodet
-    {
-        ncnn::MutexLockGuard g(lock);
 
-        if (g_yolo) {
-            std::vector<Object> objects;
-            g_yolo->detect(rgb, objects);
-            g_yolo->draw(rgb, objects);
-        } else {
-            draw_unsupported(rgb);
-        }
+    ncnn::MutexLockGuard g(lock);
+    if (g_yolo) {
+        std::vector<Object> objects;
+        g_yolo->detect(rgb, objects);
+        g_yolo->draw(rgb, objects);
     }
-
+    else {
+        draw_unsupported(rgb);
+    }
     draw_fps(rgb);
 
 
-    // Print the first 50 values of sourceData
-    int length = env->GetArrayLength(sourceData);
-    int printLength = length < 50 ? length : 50;
-    __android_log_print(ANDROID_LOG_INFO, "TEST", "DATA_TEST: length=%d, printLength=%d", length, printLength);
-    for (int i = 0; i < printLength; i++) {
-        __android_log_print(ANDROID_LOG_INFO, "TEST", "Ori data[%d]=%d", i, static_cast<int>(data[i]));
-        __android_log_print(ANDROID_LOG_INFO, "TEST", "Mat data[%d]=%d", i, static_cast<int>(rgba.data[i]));
-    }
+
+
+
+    // DEBUG
+//    int length = env->GetArrayLength(sourceData);
+//    int printLength = length < 50 ? length : 50;
+//    __android_log_print(ANDROID_LOG_INFO, "TEST", "DATA_TEST: length=%d, printLength=%d", length, printLength);
+//    for (int i = 0; i < printLength; i++) {
+//        __android_log_print(ANDROID_LOG_INFO, "TEST", "Ori data[%d]=%d", i, static_cast<int>(data[i]));
+//        __android_log_print(ANDROID_LOG_INFO, "TEST", "CV::Mat RGBA data[%d]=%d", i, static_cast<int>(rgba.data[i]));
+//        __android_log_print(ANDROID_LOG_INFO, "TEST", "CV::Mat RGB data[%d]=%d", i, static_cast<int>(rgb.data[i]));
+//    }
 
     return JNI_TRUE;
 }
