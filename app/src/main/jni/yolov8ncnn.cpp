@@ -183,7 +183,6 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jsho
         if (g_yolo) {
             std::vector<Object> objects;
             g_yolo->detect(rgb, objects);
-
             g_yolo->draw(rgb, objects);
         } else {
             draw_unsupported(rgb);
