@@ -39,6 +39,10 @@
 
 #endif // __ARM_NEON
 
+static Yolo *g_yolo = 0;
+static ncnn::Mutex lock;
+ANativeWindow* win;
+
 static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
 
@@ -106,9 +110,16 @@ static int draw_fps(cv::Mat &rgb) {
     return 0;
 }
 
-static Yolo *g_yolo = 0;
-static ncnn::Mutex lock;
+static void set_window(ANativeWindow* _win)
+{
+    if (win)
+    {
+        ANativeWindow_release(win);
+    }
 
+    win = _win;
+    ANativeWindow_acquire(win);
+}
 
 extern "C" {
 
@@ -206,4 +217,16 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
     return JNI_TRUE;
 }
 
+JNIEXPORT jboolean JNICALL
+Java_com_jiangdg_yolov8_Yolov8Ncnn_setOutputWindow(JNIEnv *env, jobject thiz, jobject surface) {
+    ANativeWindow* win = ANativeWindow_fromSurface(env, surface);
+
+    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "setOutputWindow %p", win);
+
+    set_window(win);
+
+    return JNI_TRUE;
 }
+
+}
+

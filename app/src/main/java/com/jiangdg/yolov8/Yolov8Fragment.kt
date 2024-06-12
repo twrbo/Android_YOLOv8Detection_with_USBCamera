@@ -82,6 +82,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     {
         data?.let {
             yolov8ncnn.detectObjects(data,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
+//            yolov8ncnn.setOutputWindow()
         }
     }
 }
