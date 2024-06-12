@@ -27,10 +27,11 @@
 #include <benchmark.h>
 
 #include "yolo.h"
+#include "../../../../libnative/src/main/cpp/utils/logger.h"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-
+#include <iostream>
 #if __ARM_NEON
 
 #include <arm_neon.h>
@@ -167,15 +168,16 @@ JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv *
 }
 
 JNIEXPORT jboolean JNICALL
-Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jshortArray sourceData, jint width, jint height) {
-    jshort *data = env->GetShortArrayElements(sourceData, nullptr);
+Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray sourceData, jint width, jint height) {
+    jbyte *data = env->GetByteArrayElements(sourceData, nullptr);
+
     cv::Mat rgba(height, width, CV_8UC4, reinterpret_cast<unsigned char *>(data));
     cv::Mat rgb;
-
     // Convert data from rgba to rgb
     cv::cvtColor(rgba, rgb, cv::COLOR_RGBA2RGB);
 
-    env->ReleaseShortArrayElements(sourceData, data, 0);
+    env->ReleaseByteArrayElements(sourceData, data, 0);
+
     // nanodet
     {
         ncnn::MutexLockGuard g(lock);
@@ -190,6 +192,16 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jsho
     }
 
     draw_fps(rgb);
+
+
+    // Print the first 50 values of sourceData
+    int length = env->GetArrayLength(sourceData);
+    int printLength = length < 50 ? length : 50;
+    __android_log_print(ANDROID_LOG_INFO, "TEST", "DATA_TEST: length=%d, printLength=%d", length, printLength);
+    for (int i = 0; i < printLength; i++) {
+        __android_log_print(ANDROID_LOG_INFO, "TEST", "Ori data[%d]=%d", i, static_cast<int>(data[i]));
+        __android_log_print(ANDROID_LOG_INFO, "TEST", "Mat data[%d]=%d", i, static_cast<int>(rgba.data[i]));
+    }
 
     return JNI_TRUE;
 }

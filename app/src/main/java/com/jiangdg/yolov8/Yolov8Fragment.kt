@@ -22,7 +22,6 @@ import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.base.CameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
-import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.utils.*
 import com.jiangdg.ausbc.widget.*
 import com.jiangdg.demo.databinding.FragmentYolov8Binding
@@ -82,13 +81,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     override fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
     {
         data?.let {
-            val correctedData = ShortArray(data.size)
-    
-            // Convert to correct range
-            for (i in data.indices) {
-                correctedData[i] = (data[i].toInt() and 0xFF).toShort()
-            }
-            yolov8ncnn.detectObjects(correctedData,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
+            yolov8ncnn.detectObjects(data,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
         }
     }
 }
