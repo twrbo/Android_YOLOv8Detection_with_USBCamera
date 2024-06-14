@@ -39,7 +39,7 @@ import com.jiangdg.demo.databinding.FragmentYolov8Binding
  */
 class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
 {
-    private lateinit var mViewBinding: FragmentYolov8Binding
+    private lateinit var viewBinding: FragmentYolov8Binding
     private val TEST_TAG = "TEST_TAG"
     val yolov8Ncnn = Yolov8Ncnn()
     private lateinit var assets: AssetManager
@@ -51,7 +51,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
         
         assets = requireContext().assets
         
-        mViewBinding.spinnerModel.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
+        viewBinding.spinnerModel.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
         {
             override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
             {
@@ -67,7 +67,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
             }
         }
         
-        mViewBinding.spinnerProcessor.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
+        viewBinding.spinnerProcessor.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
         {
             override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
             {
@@ -83,6 +83,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
             {
             }
         }
+        
         
         yolov8NcnnLoadModel()
     }
@@ -122,13 +123,13 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     
     override fun getCameraViewContainer(): ViewGroup
     {
-        return mViewBinding.cameraViewContainer
+        return viewBinding.cameraViewContainer
     }
     
     override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View
     {
-        mViewBinding = FragmentYolov8Binding.inflate(inflater, container, false)
-        return mViewBinding.root
+        viewBinding = FragmentYolov8Binding.inflate(inflater, container, false)
+        return viewBinding.root
     }
     
     
@@ -139,7 +140,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     {
         data?.let {
             yolov8Ncnn.detectObjects(data, getCameraRequest().previewWidth, getCameraRequest().previewHeight)
-//            yolov8Ncnn.setOutputWindow(mViewBinding.cameraSurfaceView.holder.surface)
+//            yolov8Ncnn.setOutputWindow(viewBinding.cameraSurfaceView.holder.surface)
 //            yolov8Ncnn.setOutputWindow()
         }
     }
