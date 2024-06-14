@@ -44,13 +44,6 @@ class MainActivity : AppCompatActivity() {
     private var mWakeLock: PowerManager.WakeLock? = null
     private var immersionBar: ImmersionBar? = null
     private lateinit var viewBinding: ActivityMainBinding
-    private lateinit var yolov8View: FragmentYolov8Binding
-    
-    // 2024.05.28
-    private var current_model = 0
-    private var current_cpugpu = 0
-    val yolov8ncnn = Yolov8Ncnn()
-    // 2024.05.28
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,55 +53,10 @@ class MainActivity : AppCompatActivity() {
 //        replaceDemoFragment(DemoMultiCameraFragment())
 //        replaceDemoFragment(DemoFragment())
 //        replaceDemoFragment(GlSurfaceFragment())
-        
-        yolov8View = FragmentYolov8Binding.inflate(layoutInflater)
-        yolov8View.spinnerModel!!.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
-        {
-            override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
-            {
-                if(position != current_model)
-                {
-                    current_model = position
-                    yolov8ncnnLoadModel()
-                }
-            }
-        
-            override fun onNothingSelected(arg0: AdapterView<*>?)
-            {
-            }
-        }
-        
-        yolov8View.spinnerCPUGPU!!.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
-        {
-            override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
-            {
-                if(position != current_cpugpu)
-                {
-                    current_cpugpu = position
-                    yolov8ncnnLoadModel()
-                }
-            }
-
-            override fun onNothingSelected(arg0: AdapterView<*>?)
-            {
-            }
-        }
-        
-        yolov8ncnnLoadModel()
-        
         replaceDemoFragment(Yolov8Fragment())
-        
-        
     }
     
-    private fun yolov8ncnnLoadModel()
-    {
-        val ret_init: Boolean = yolov8ncnn.loadModel(assets, current_model, current_cpugpu)
-        if(!ret_init)
-        {
-            Log.e("MainActivity", "yolov8ncnn loadModel failed")
-        }
-    }
+
     
     override fun onStart() {
         super.onStart()

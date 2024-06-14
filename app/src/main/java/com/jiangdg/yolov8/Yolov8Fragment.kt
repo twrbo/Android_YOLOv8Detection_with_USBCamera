@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 package com.jiangdg.yolov8
+
+import android.content.res.AssetManager
+import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.base.CameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
-import com.jiangdg.ausbc.utils.*
-import com.jiangdg.ausbc.widget.*
+import com.jiangdg.ausbc.utils.ToastUtils
+import com.jiangdg.ausbc.widget.AspectRatioTextureView
+import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.demo.databinding.FragmentYolov8Binding
+
 
 /** CameraFragment Usage Demo
  *
@@ -33,43 +40,93 @@ import com.jiangdg.demo.databinding.FragmentYolov8Binding
 class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
 {
     private lateinit var mViewBinding: FragmentYolov8Binding
-    private val TEST_TAG="TEST_TAG"
-    val yolov8ncnn = Yolov8Ncnn()
+    private val TEST_TAG = "TEST_TAG"
+    val yolov8Ncnn = Yolov8Ncnn()
+    private lateinit var assets: AssetManager
+    private var currentModel = 0   // 0: n     1:s
+    private var currentProcessor = 0  // 0: CPU   1:GPU
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?)
+    {
+        super.onViewCreated(view, savedInstanceState)
+        
+        assets = requireContext().assets
+        
+        mViewBinding.spinnerModel.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
+        {
+            override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
+            {
+                if(position != currentModel)
+                {
+                    currentModel = position
+                    yolov8NcnnLoadModel()
+                }
+            }
+            
+            override fun onNothingSelected(arg0: AdapterView<*>?)
+            {
+            }
+        }
+        
+        mViewBinding.spinnerProcessor.onItemSelectedListener = object : AdapterView.OnItemSelectedListener
+        {
+            override fun onItemSelected(arg0: AdapterView<*>?, arg1: View, position: Int, id: Long)
+            {
+                if(position != currentProcessor)
+                {
+                    Log.e("TEST", "onItemSelectedListener")
+                    currentProcessor = position
+                    yolov8NcnnLoadModel()
+                }
+            }
+            
+            override fun onNothingSelected(arg0: AdapterView<*>?)
+            {
+            }
+        }
+        
+        yolov8NcnnLoadModel()
+    }
     
-    override fun onCameraState(self: MultiCameraClient.ICamera,code: ICameraStateCallBack.State,msg: String?)
+    override fun onCameraState(self: MultiCameraClient.ICamera, code: ICameraStateCallBack.State, msg: String?)
     {
         addPreviewDataCallBack(this)
-        when (code) {
+        when(code)
+        {
             ICameraStateCallBack.State.OPENED -> handleCameraOpened()
             ICameraStateCallBack.State.CLOSED -> handleCameraClosed()
             ICameraStateCallBack.State.ERROR -> handleCameraError(msg)
         }
     }
-
+    
     
     private fun handleCameraError(msg: String?)
     {
         ToastUtils.show("camera opened error: $msg")
     }
-
-    private fun handleCameraClosed() {
-
+    
+    private fun handleCameraClosed()
+    {
+        
         ToastUtils.show("camera closed success")
     }
-
-    private fun handleCameraOpened() {
+    
+    private fun handleCameraOpened()
+    {
     
     }
     
-    override fun getCameraView(): IAspectRatio {
+    override fun getCameraView(): IAspectRatio
+    {
         return AspectRatioTextureView(requireContext())
     }
     
-    override fun getCameraViewContainer(): ViewGroup {
+    override fun getCameraViewContainer(): ViewGroup
+    {
         return mViewBinding.cameraViewContainer
     }
     
-    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View {
+    override fun getRootView(inflater: LayoutInflater, container: ViewGroup?): View
+    {
         mViewBinding = FragmentYolov8Binding.inflate(inflater, container, false)
         return mViewBinding.root
     }
@@ -81,8 +138,18 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     override fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
     {
         data?.let {
-            yolov8ncnn.detectObjects(data,getCameraRequest().previewWidth,getCameraRequest().previewHeight)
-//            yolov8ncnn.setOutputWindow()
+            yolov8Ncnn.detectObjects(data, getCameraRequest().previewWidth, getCameraRequest().previewHeight)
+//            yolov8Ncnn.setOutputWindow(mViewBinding.cameraSurfaceView.holder.surface)
+//            yolov8Ncnn.setOutputWindow()
+        }
+    }
+    
+    private fun yolov8NcnnLoadModel()
+    {
+        val ret_init: Boolean = yolov8Ncnn.loadModel(assets, currentModel, currentProcessor)
+        if(!ret_init)
+        {
+            Log.e("MainActivity", "yolov8Ncnn loadModel failed")
         }
     }
 }
