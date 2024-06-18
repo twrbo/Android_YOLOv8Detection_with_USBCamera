@@ -15,7 +15,9 @@
  */
 package com.jiangdg.yolov8
 
+import android.R
 import android.content.res.AssetManager
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -23,6 +25,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
+import android.widget.FrameLayout
+import android.widget.ImageView
 import com.jiangdg.ausbc.MultiCameraClient
 import com.jiangdg.ausbc.base.CameraFragment
 import com.jiangdg.ausbc.callback.ICameraStateCallBack
@@ -31,6 +35,7 @@ import com.jiangdg.ausbc.utils.ToastUtils
 import com.jiangdg.ausbc.widget.AspectRatioTextureView
 import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.demo.databinding.FragmentYolov8Binding
+import java.nio.ByteBuffer
 
 
 /** CameraFragment Usage Demo
@@ -44,7 +49,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     val yolov8Ncnn = Yolov8Ncnn()
     private lateinit var assets: AssetManager
     private var currentModel = 0   // 0: n     1:s
-    private var currentProcessor = 0  // 0: CPU   1:GPU
+    private var currentProcessor = 0  // 0: GPU   1:CPU
     override fun onViewCreated(view: View, savedInstanceState: Bundle?)
     {
         super.onViewCreated(view, savedInstanceState)
@@ -139,18 +144,29 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     override fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
     {
         data?.let {
-            yolov8Ncnn.detectObjects(data, getCameraRequest().previewWidth, getCameraRequest().previewHeight)
-//            yolov8Ncnn.setOutputWindow(viewBinding.cameraSurfaceView.holder.surface)
-//            yolov8Ncnn.setOutputWindow()
+            // Perform yolov8
+//            yolov8Ncnn.detectObjects(data, width, height)
+            val result = yolov8Ncnn.detectObjects(data, width, height)
+
+            // Update UI
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(result))
+            requireActivity().runOnUiThread{
+                // Create ImageView and set Bitmap
+                val imageView = ImageView(requireContext())
+                imageView.setImageBitmap(bitmap)
+
+                // Add ImageView to FrameLayout
+                viewBinding.cameraViewContainer.addView(imageView)
+            }
         }
     }
     
     private fun yolov8NcnnLoadModel()
     {
-        val ret_init: Boolean = yolov8Ncnn.loadModel(assets, currentModel, currentProcessor)
-        if(!ret_init)
+        if(!yolov8Ncnn.loadModel(assets, currentModel, currentProcessor))
         {
-            Log.e("MainActivity", "yolov8Ncnn loadModel failed")
+            Log.e("Yolov8Fragment", "yolov8Ncnn loadModel failed")
         }
     }
 }

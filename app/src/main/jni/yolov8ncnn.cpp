@@ -41,7 +41,6 @@
 
 static Yolo *g_yolo = 0;
 static ncnn::Mutex lock;
-ANativeWindow* win;
 
 static int draw_unsupported(cv::Mat &rgb) {
     const char text[] = "unsupported";
@@ -110,16 +109,6 @@ static int draw_fps(cv::Mat &rgb) {
     return 0;
 }
 
-static void set_window(ANativeWindow* _win)
-{
-    if (win)
-    {
-        ANativeWindow_release(win);
-    }
-
-    win = _win;
-    ANativeWindow_acquire(win);
-}
 
 extern "C" {
 
@@ -180,7 +169,7 @@ JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv *
     return JNI_TRUE;
 }
 
-JNIEXPORT jboolean JNICALL
+JNIEXPORT jbyteArray JNICALL
 Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray sourceData, jint width, jint height) {
     jbyte *data = env->GetByteArrayElements(sourceData, nullptr);
 
@@ -201,32 +190,17 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
     }
     draw_fps(rgb);
 
+    // Convert Mat to byte array
+    cv::cvtColor(rgb, rgba, cv::COLOR_RGB2RGBA);
+    jbyteArray result = env->NewByteArray(rgba.total() * rgba.elemSize());
+    env->SetByteArrayRegion(result, 0, rgba.total() * rgba.elemSize(), (jbyte*)rgba.data);
+
+    // Release
     env->ReleaseByteArrayElements(sourceData, data, 0);
 
-
-    // DEBUG
-//    int length = env->GetArrayLength(sourceData);
-//    int printLength = length < 50 ? length : 50;
-//    __android_log_print(ANDROID_LOG_INFO, "TEST", "DATA_TEST: length=%d, printLength=%d", length, printLength);
-//    for (int i = 0; i < printLength; i++) {
-//        __android_log_print(ANDROID_LOG_INFO, "TEST", "Ori data[%d]=%d", i, static_cast<int>(data[i]));
-//        __android_log_print(ANDROID_LOG_INFO, "TEST", "CV::Mat RGBA data[%d]=%d", i, static_cast<int>(rgba.data[i]));
-//        __android_log_print(ANDROID_LOG_INFO, "TEST", "CV::Mat RGB data[%d]=%d", i, static_cast<int>(rgb.data[i]));
-//    }
-
-    return JNI_TRUE;
+    return result;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_jiangdg_yolov8_Yolov8Ncnn_setOutputWindow(JNIEnv *env, jobject thiz, jobject surface) {
-    ANativeWindow* win = ANativeWindow_fromSurface(env, surface);
-
-    __android_log_print(ANDROID_LOG_DEBUG, "ncnn", "setOutputWindow %p", win);
-
-    set_window(win);
-
-    return JNI_TRUE;
-}
 
 }
 

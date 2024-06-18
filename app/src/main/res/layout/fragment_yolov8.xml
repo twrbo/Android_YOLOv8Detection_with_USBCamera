@@ -50,13 +50,6 @@
         android:id="@+id/cameraViewContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black">
-
-    <SurfaceView
-        android:id="@+id/cameraSurfaceView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-        </FrameLayout>
+        android:background="@color/black"/>
 
 </LinearLayout>
