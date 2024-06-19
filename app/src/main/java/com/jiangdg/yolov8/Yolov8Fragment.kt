@@ -49,11 +49,11 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     private val LOG_TAG = "Yolov8Fragment"
     val yolov8Ncnn = Yolov8Ncnn()
     private lateinit var assets: AssetManager
-    private var currentModel = 0   // 0: n     1:s
-    private var currentProcessor = 0  // 0: GPU   1:CPU
+    private var currentModel = 0        // 0: n     1: s
+    private var currentProcessor = 0    // 0: GPU   1: CPU
     private lateinit var frameResult: ByteArray
     private lateinit var bitmap: Bitmap
-    private var imageViewFrameResult: ImageView? = null
+    private lateinit var imageViewFrameResult: ImageView
     override fun onViewCreated(view: View, savedInstanceState: Bundle?)
     {
         super.onViewCreated(view, savedInstanceState)
@@ -106,6 +106,39 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
         }
     }
     
+    override fun onPreviewData(source: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
+    {
+        if(!::frameResult.isInitialized)
+        {
+            frameResult = ByteArray(width * height * 4)
+            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        }
+        source?.let {
+            if(yolov8Ncnn.detectObjects(source, frameResult, width, height))
+            {
+                bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frameResult))
+                // Update UI
+                requireActivity().runOnUiThread {
+                    if(!::imageViewFrameResult.isInitialized)
+                    {
+                        imageViewFrameResult = ImageView(requireContext()).apply {
+                            viewBinding.cameraViewContainer.addView(this)
+                        }
+                    }
+                    imageViewFrameResult.setImageBitmap(bitmap)
+                }
+            }
+            else Log.e("LOG_TAG", "Failed - yolov8Ncnn detect objects ")
+        }
+    }
+    
+    private fun yolov8NcnnLoadModel()
+    {
+        if(!yolov8Ncnn.loadModel(assets, currentModel, currentProcessor))
+        {
+            Log.e("LOG_TAG", "Failed - yolov8Ncnn loadModel ")
+        }
+    }
     
     private fun handleCameraError(msg: String?)
     {
@@ -120,7 +153,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     
     private fun handleCameraOpened()
     {
-    
+        ToastUtils.show("camera open success")
     }
     
     override fun getCameraView(): IAspectRatio
@@ -141,39 +174,4 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     
     
     override fun getGravity(): Int = Gravity.CENTER
-    
-    
-    override fun onPreviewData(source: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
-    {
-        if(!::frameResult.isInitialized)
-        {
-            frameResult = ByteArray(width * height * 4)
-            bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        }
-        source?.let {
-            if(yolov8Ncnn.detectObjects(source, frameResult, width, height))
-            {
-                bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frameResult))
-                // Update UI
-                requireActivity().runOnUiThread {
-                    if(imageViewFrameResult == null)
-                    {
-                        imageViewFrameResult = ImageView(requireContext()).apply {
-                            viewBinding.cameraViewContainer.addView(this)
-                        }
-                    }
-                    imageViewFrameResult?.setImageBitmap(bitmap)
-                }
-            }
-            else Log.e("LOG_TAG", "Failed - yolov8Ncnn detect objects ")
-        }
-    }
-    
-    private fun yolov8NcnnLoadModel()
-    {
-        if(!yolov8Ncnn.loadModel(assets, currentModel, currentProcessor))
-        {
-            Log.e("LOG_TAG", "Failed - yolov8Ncnn loadModel ")
-        }
-    }
 }

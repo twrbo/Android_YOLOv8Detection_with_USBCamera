@@ -109,7 +109,6 @@ static int draw_fps(cv::Mat &rgb) {
     return 0;
 }
 
-
 extern "C" {
 
 // public native boolean loadModel(AssetManager mgr, int modelid, int cpugpu);
@@ -169,8 +168,7 @@ JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv *
     return JNI_TRUE;
 }
 
-JNIEXPORT jboolean JNICALL
-Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray source, jbyteArray frameResult, jint width, jint height) {
+JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray source, jbyteArray frameResult, jint width, jint height) {
     jbyte *data = env->GetByteArrayElements(source, nullptr);
 
     // Convert data from RGBA to RGB

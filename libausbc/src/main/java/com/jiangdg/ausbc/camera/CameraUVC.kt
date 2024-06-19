@@ -78,40 +78,9 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 // for video
                 // avoid preview size changed
                 putVideoData(data)
-                
-                // Perform YOLO detection
-//                val detectedObjects = yolov8Ncnn.detectObjects(data, previewWidth, previewHeight)
-                
-                // Draw detected objects on the image
-//                drawDetectedObjects(detectedObjects as Array<Any>)
             }
         }
     }
-
-//    private fun drawDetectedObjects(objects: Array<Any>) {
-//        runOnUiThread {
-//            // Draw the detected objects on the ImageView
-//            val canvas = imageView.holder.lockCanvas()
-//            if (canvas != null) {
-//                val paint = Paint()
-//                paint.color = Color.RED
-//                paint.style = Paint.Style.STROKE
-//                paint.strokeWidth = 2f
-//
-//                for (obj in objects) {
-//                    val rect = Rect(obj.x, obj.y, obj.x + obj.width, obj.y + obj.height)
-//                    canvas.drawRect(rect, paint)
-//
-//                    val textPaint = Paint()
-//                    textPaint.color = Color.WHITE
-//                    textPaint.textSize = 30f
-//                    canvas.drawText("${obj.label} ${obj.prob * 100}%", rect.left.toFloat(), rect.top.toFloat(), textPaint)
-//                }
-//
-//                imageView.holder.unlockCanvasAndPost(canvas)
-//            }
-//        }
-//    }
     
     override fun getAllPreviewSizes(aspectRatio: Double?): MutableList<PreviewSize> {
         val previewSizeList = arrayListOf<PreviewSize>()
