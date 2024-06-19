@@ -192,15 +192,13 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
 
     // Convert Mat to byte array
     cv::cvtColor(rgb, rgba, cv::COLOR_RGB2RGBA);
-//     = env->NewByteArray(rgba.total() * rgba.elemSize());
-    env->SetByteArrayRegion(frameResult, 0, rgba.total() * rgba.elemSize(), (jbyte*)rgba.data);
+    env->SetByteArrayRegion(frameResult, 0, rgba.total() * rgba.elemSize(), (jbyte *) rgba.data);
 
     // Release
     env->ReleaseByteArrayElements(source, data, 0);
 
     return JNI_TRUE;
 }
-
 
 }
 

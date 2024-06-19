@@ -151,7 +151,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
             bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         }
         source?.let {
-            if(yolov8Ncnn.detectObjects(source,frameResult, width, height))
+            if(yolov8Ncnn.detectObjects(source, frameResult, width, height))
             {
                 bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frameResult))
                 // Update UI
@@ -165,8 +165,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
                     imageViewFrameResult?.setImageBitmap(bitmap)
                 }
             }
-            else
-                Log.e("LOG_TAG","Failed - yolov8Ncnn detect objects ")
+            else Log.e("LOG_TAG", "Failed - yolov8Ncnn detect objects ")
         }
     }
     
