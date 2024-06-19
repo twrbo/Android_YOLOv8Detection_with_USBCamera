@@ -169,9 +169,9 @@ JNIEXPORT jboolean JNICALL Java_com_jiangdg_yolov8_Yolov8Ncnn_loadModel(JNIEnv *
     return JNI_TRUE;
 }
 
-JNIEXPORT jbyteArray JNICALL
-Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray sourceData, jint width, jint height) {
-    jbyte *data = env->GetByteArrayElements(sourceData, nullptr);
+JNIEXPORT jboolean JNICALL
+Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyteArray source, jbyteArray frameResult, jint width, jint height) {
+    jbyte *data = env->GetByteArrayElements(source, nullptr);
 
     // Convert data from RGBA to RGB
     cv::Mat rgba(height, width, CV_8UC4, reinterpret_cast<unsigned char *>(data));
@@ -192,13 +192,15 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
 
     // Convert Mat to byte array
     cv::cvtColor(rgb, rgba, cv::COLOR_RGB2RGBA);
-    jbyteArray result = env->NewByteArray(rgba.total() * rgba.elemSize());
-    env->SetByteArrayRegion(result, 0, rgba.total() * rgba.elemSize(), (jbyte*)rgba.data);
+//     = env->NewByteArray(rgba.total() * rgba.elemSize());
+    env->SetByteArrayRegion(frameResult, 0, rgba.total() * rgba.elemSize(), (jbyte*)rgba.data);
 
     // Release
-    env->ReleaseByteArrayElements(sourceData, data, 0);
+    env->ReleaseByteArrayElements(source, data, 0);
+    rgb.release();
+    rgba.release();
 
-    return result;
+    return JNI_TRUE;
 }
 
 

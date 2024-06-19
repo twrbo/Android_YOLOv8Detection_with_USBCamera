@@ -50,6 +50,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     private lateinit var assets: AssetManager
     private var currentModel = 0   // 0: n     1:s
     private var currentProcessor = 0  // 0: GPU   1:CPU
+    private lateinit var frameResult: ByteArray
     override fun onViewCreated(view: View, savedInstanceState: Bundle?)
     {
         super.onViewCreated(view, savedInstanceState)
@@ -141,21 +142,25 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     override fun getGravity(): Int = Gravity.CENTER
     
     
-    override fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
+    override fun onPreviewData(source: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
     {
-        data?.let {
+        if(!this::frameResult.isInitialized)
+        {
+            frameResult = ByteArray(width * height * 4)
+        }
+        source?.let {
             // Perform yolov8
 //            yolov8Ncnn.detectObjects(data, width, height)
-            val result = yolov8Ncnn.detectObjects(data, width, height)
-
+            val result = yolov8Ncnn.detectObjects(source,frameResult, width, height)
+            
             // Update UI
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(result))
-            requireActivity().runOnUiThread{
+            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frameResult))
+            requireActivity().runOnUiThread {
                 // Create ImageView and set Bitmap
                 val imageView = ImageView(requireContext())
                 imageView.setImageBitmap(bitmap)
-
+                
                 // Add ImageView to FrameLayout
                 viewBinding.cameraViewContainer.addView(imageView)
             }
