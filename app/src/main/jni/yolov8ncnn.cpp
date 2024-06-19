@@ -197,8 +197,6 @@ Java_com_jiangdg_yolov8_Yolov8Ncnn_detectObjects(JNIEnv *env, jobject thiz, jbyt
 
     // Release
     env->ReleaseByteArrayElements(source, data, 0);
-    rgb.release();
-    rgba.release();
 
     return JNI_TRUE;
 }
