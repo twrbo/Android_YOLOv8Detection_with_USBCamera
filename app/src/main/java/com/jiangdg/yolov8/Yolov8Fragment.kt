@@ -46,6 +46,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
 {
     private lateinit var viewBinding: FragmentYolov8Binding
     private val TEST_TAG = "TEST_TAG"
+    private val LOG_TAG = "Yolov8Fragment"
     val yolov8Ncnn = Yolov8Ncnn()
     private lateinit var assets: AssetManager
     private var currentModel = 0   // 0: n     1:s
@@ -81,7 +82,6 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
             {
                 if(position != currentProcessor)
                 {
-                    Log.e("TEST", "onItemSelectedListener")
                     currentProcessor = position
                     yolov8NcnnLoadModel()
                 }
@@ -91,7 +91,6 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
             {
             }
         }
-        
         
         yolov8NcnnLoadModel()
     }
@@ -146,26 +145,28 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     
     override fun onPreviewData(source: ByteArray?, width: Int, height: Int, format: IPreviewDataCallBack.DataFormat)
     {
-        if(!this::frameResult.isInitialized)
+        if(!::frameResult.isInitialized)
         {
             frameResult = ByteArray(width * height * 4)
             bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         }
         source?.let {
-            // Perform yolov8
-            val result = yolov8Ncnn.detectObjects(source,frameResult, width, height)
-            
-            // Update UI
-            bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frameResult))
-            requireActivity().runOnUiThread {
-                // Reuse or create ImageView
-                if (imageViewFrameResult == null) {
-                    imageViewFrameResult = ImageView(requireContext()).apply {
-                        viewBinding.cameraViewContainer.addView(this)
+            if(yolov8Ncnn.detectObjects(source,frameResult, width, height))
+            {
+                bitmap.copyPixelsFromBuffer(ByteBuffer.wrap(frameResult))
+                // Update UI
+                requireActivity().runOnUiThread {
+                    if(imageViewFrameResult == null)
+                    {
+                        imageViewFrameResult = ImageView(requireContext()).apply {
+                            viewBinding.cameraViewContainer.addView(this)
+                        }
                     }
+                    imageViewFrameResult?.setImageBitmap(bitmap)
                 }
-                imageViewFrameResult?.setImageBitmap(bitmap)
             }
+            else
+                Log.e("LOG_TAG","Failed - yolov8Ncnn detect objects ")
         }
     }
     
@@ -173,7 +174,7 @@ class Yolov8Fragment : CameraFragment(), IPreviewDataCallBack
     {
         if(!yolov8Ncnn.loadModel(assets, currentModel, currentProcessor))
         {
-            Log.e("Yolov8Fragment", "yolov8Ncnn loadModel failed")
+            Log.e("LOG_TAG", "Failed - yolov8Ncnn loadModel ")
         }
     }
 }

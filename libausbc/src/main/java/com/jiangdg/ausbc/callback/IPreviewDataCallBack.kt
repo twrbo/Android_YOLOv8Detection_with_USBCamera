@@ -20,7 +20,7 @@ package com.jiangdg.ausbc.callback
  * @author Created by jiangdg on 2022/1/29
  */
 interface IPreviewDataCallBack {
-    fun onPreviewData(data: ByteArray?, width: Int, height: Int, format: DataFormat)
+    fun onPreviewData(source: ByteArray?, width: Int, height: Int, format: DataFormat)
 
     enum class DataFormat {
         NV21, RGBA
