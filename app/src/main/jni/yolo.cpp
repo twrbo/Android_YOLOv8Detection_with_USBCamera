@@ -252,6 +252,11 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
     yolo.load_param(mgr, parampath);
     yolo.load_model(mgr, modelpath);
 
+    // disable FP16
+    yolo.opt.use_fp16_packed = false;
+    yolo.opt.use_fp16_storage = false;
+    yolo.opt.use_fp16_arithmetic = false;
+
     target_size = _target_size;
     mean_vals[0] = _mean_vals[0];
     mean_vals[1] = _mean_vals[1];
@@ -261,6 +266,55 @@ int Yolo::load(AAssetManager* mgr, const char* modeltype, int _target_size, cons
     norm_vals[2] = _norm_vals[2];
 
     return 0;
+}
+
+void transpose(const ncnn::Mat& in, ncnn::Mat& out)
+{
+    ncnn::Option opt;
+    opt.num_threads = 2;
+    opt.use_fp16_storage = false;
+    opt.use_packing_layout = true;
+
+    ncnn::Layer* op = ncnn::create_layer("Permute");
+
+// set param
+    ncnn::ParamDict pd;
+    pd.set(0, 1);// order_type
+
+    op->load_param(pd);
+
+    op->create_pipeline(opt);
+
+    ncnn::Mat in_packed = in;
+    {
+        // resolve dst_elempack
+        int dims = in.dims;
+        int elemcount = 0;
+        if (dims == 1) elemcount = in.elempack * in.w;
+        if (dims == 2) elemcount = in.elempack * in.h;
+        if (dims == 3) elemcount = in.elempack * in.c;
+
+        int dst_elempack = 1;
+        if (op->support_packing)
+        {
+            if (elemcount % 8 == 0 && (ncnn::cpu_support_x86_avx2() || ncnn::cpu_support_x86_avx()))
+                dst_elempack = 8;
+            else if (elemcount % 4 == 0)
+                dst_elempack = 4;
+        }
+
+        if (in.elempack != dst_elempack)
+        {
+            convert_packing(in, in_packed, dst_elempack, opt);
+        }
+    }
+
+// forward
+    op->forward(in_packed, out, opt);
+
+    op->destroy_pipeline(opt);
+
+    delete op;
 }
 
 int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_threshold, float nms_threshold)
@@ -285,7 +339,7 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
         w = w * scale;
     }
 
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(rgb.data, ncnn::Mat::PIXEL_RGB2BGR, width, height, w, h);
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(rgb.data, ncnn::Mat::PIXEL_RGB, width, height, w, h);
 
     // pad to target_size rectangle
     int wpad = (w + 31) / 32 * 32 - w;
@@ -304,9 +358,13 @@ int Yolo::detect(const cv::Mat& rgb, std::vector<Object>& objects, float prob_th
     ncnn::Mat out;
     ex.extract("output0", out);
 
+//    ncnn::Mat out_transpose;
+//    transpose(out, out_transpose);
+
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
     std::vector<GridAndStride> grid_strides;
     generate_grids_and_stride(in_pad.w, in_pad.h, strides, grid_strides);
+//    generate_proposals(grid_strides, out_transpose, prob_threshold, proposals);
     generate_proposals(grid_strides, out, prob_threshold, proposals);
 
     // sort all proposals by score from highest to lowest
@@ -420,3 +478,4 @@ int Yolo::draw(cv::Mat& rgb, const std::vector<Object>& objects)
 
     return 0;
 }
+
