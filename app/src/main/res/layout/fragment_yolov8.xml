@@ -42,7 +42,6 @@
             android:layout_height="wrap_content"
             android:drawSelectorOnTop="true"
             android:entries="@array/cpugpu_array" />
-
     </LinearLayout>
 
 
@@ -51,5 +50,4 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/black"/>
-
 </LinearLayout>
